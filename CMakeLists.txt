@@ -37,6 +37,7 @@ set(TINYCTHREAD "${CMAKE_CURRENT_SOURCE_DIR}/deps/tinycthread.h"
                 "${CMAKE_CURRENT_SOURCE_DIR}/deps/tinycthread.c")  
 
 set(LIB_CANVAS_SRC
+	${GLAD}
    "${CMAKE_CURRENT_SOURCE_DIR}/src/canvas.c")
 	
 set(APP_SRC
