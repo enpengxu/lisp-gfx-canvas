@@ -36,16 +36,22 @@ set(GETOPT "${CMAKE_CURRENT_SOURCE_DIR}/deps/getopt.h"
 set(TINYCTHREAD "${CMAKE_CURRENT_SOURCE_DIR}/deps/tinycthread.h"
                 "${CMAKE_CURRENT_SOURCE_DIR}/deps/tinycthread.c")  
 
-set(CANVAS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/canvas.c")
-	      
-add_executable(lisp-canvas WIN32 MACOSX_BUNDLE ${CANVAS_SRC} ${ICON} ${GLAD})
+set(LIB_CANVAS_SRC
+   "${CMAKE_CURRENT_SOURCE_DIR}/src/canvas.c")
+	
+set(APP_SRC
+   "${CMAKE_CURRENT_SOURCE_DIR}/src/app.c")
 
-target_link_libraries(lisp-canvas "${CMAKE_THREAD_LIBS_INIT}")
+add_library(lispcanvas SHARED ${LIB_CANVAS_SRC} )      
+
+add_executable(canvas WIN32 MACOSX_BUNDLE ${APP_SRC} ${ICON} ${GLAD})
+target_link_libraries(canvas "${CMAKE_THREAD_LIBS_INIT}" lispcanvas)
+
 if (RT_LIBRARY)
     target_link_libraries(particles "${RT_LIBRARY}")
 endif()
 
-set(WINDOWS_BINARIES lisp-canvas)
+set(WINDOWS_BINARIES canvas)
 
 set_target_properties(${WINDOWS_BINARIES} PROPERTIES
                       FOLDER "bin")

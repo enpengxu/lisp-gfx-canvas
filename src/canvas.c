@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
-
+#include <errno.h>
+#include <assert.h>
 
 static const struct
 {
@@ -52,8 +53,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 
-static void * canvas_thread(void *);
-
 struct canvas_ctx {
 	unsigned size[2];
 
@@ -71,6 +70,12 @@ static struct convas_ctx * ctx_list[MAX_CONVAS];
 
 #define CANVAS_CTX(n)  \
 	struct canvas_ctx * ctx = ctx_list[n]
+
+#define canvas_log  printf
+
+static void * canvas_thread(void *);
+static void canvas_cleanup(struct canvas_ctx *ctx);
+
 
 int
 canvas_init(int w, int h)
@@ -90,6 +95,7 @@ canvas_init(int w, int h)
 	rc = pthread_mutex_lock(&mutex);
 	assert(rc == 0);
 	ctx_list[num_ctx++] = ctx;
+
 	assert(num_ctx < MAX_CONVAS);
 	rc = pthread_mutex_unlock(&mutex);
 	assert(rc == 0);
@@ -106,7 +112,7 @@ canvas_fini(int canvas)
 	}
 	CANVAS_CTX(canvas);
 
-	rc = pthread_mutex_lock(&ctx->mutex);
+	int rc = pthread_mutex_lock(&ctx->mutex);
 	assert(rc == 0);
 	ctx->status = -1;
 	rc = pthread_cond_signal(&ctx->cond);
@@ -117,20 +123,6 @@ canvas_fini(int canvas)
 	canvas_cleanup(ctx);
 	free(ctx);
 	/* TODO */
-}
-
-
-int main(void)
-{
-	pthread_t tid;
-	int rc = pthread_create(&tid, NULL,
-				canvas_thread,
-				NULL);
-
-
-
-	pthread_join(tid, NULL);
-	return 0;
 }
 
 static void * canvas_thread(void * arg)
@@ -222,5 +214,11 @@ static void * canvas_thread(void * arg)
     glfwTerminate();
     exit(EXIT_SUCCESS);
 }
+
+static void
+canvas_cleanup(struct canvas_ctx *ctx)
+{
+}
+
 
 //! [code]
