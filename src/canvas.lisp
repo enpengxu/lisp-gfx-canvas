@@ -7,14 +7,24 @@
 
 (define-foreign-library liblispcanvas
   (:darwin "liblispcanvas.dylib")
-  (:unix "/home/leo/github/lisp-gfx-canvas/debug/liblispcanvas.so")
-  (t (:default "/home/leo/github/lisp-gfx-canvas/debug/liblispcanvas.so")))
+  (:unix "~/github/lisp-gfx-canvas/debug/liblispcanvas.so")
+  (t (:default "~/github/lisp-gfx-canvas/debug/liblispcanvas.so")))
  
 (load-foreign-library 'liblispcanvas)
 (use-foreign-library liblispcanvas)
 
- (defcfun "canvas_init" :int
+(defcfun "canvas_init" :int
   (w :int)
   (h :int))
 ;;(defcfun "canvas_fini" :void)
- 
+
+(defcfun "canvas_fini" :void
+  (w :int))
+
+
+(defcfun "foo" :int
+  (w :int)
+  (h :int))
+
+(foo 200 20)
+(canvas-init 500 600)

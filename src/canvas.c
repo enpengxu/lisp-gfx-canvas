@@ -76,6 +76,12 @@ static struct convas_ctx * ctx_list[MAX_CONVAS];
 static void * canvas_thread(void *);
 static void canvas_cleanup(struct canvas_ctx *ctx);
 
+int
+foo(int a, int b)
+{
+	return a + b;
+}
+
 
 int
 canvas_init(int w, int h)
