@@ -9,36 +9,15 @@
 #include <errno.h>
 #include <assert.h>
 
-static const struct
-{
-	float x, y;
-	float r, g, b;
-} vertices[3] =
-{
-	{ -0.6f, -0.4f, 1.f, 0.f, 0.f },
-	{  0.6f, -0.4f, 0.f, 1.f, 0.f },
-	{   0.f,  0.6f, 0.f, 0.f, 1.f }
-};
+#define MAX_CONVAS  16
 
-static const char* vertex_shader_text =
-	"#version 110\n"
-	"uniform mat4 MVP;\n"
-	"attribute vec3 vCol;\n"
-	"attribute vec2 vPos;\n"
-	"varying vec3 color;\n"
-	"void main()\n"
-	"{\n"
-	"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-	"    color = vCol;\n"
-	"}\n";
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static int num_ctx = 0;
+static struct convas_ctx * ctx_list[MAX_CONVAS];
 
-static const char* fragment_shader_text =
-	"#version 110\n"
-	"varying vec3 color;\n"
-	"void main()\n"
-	"{\n"
-	"    gl_FragColor = vec4(color, 1.0);\n"
-	"}\n";
+static void * canvas_thread(void *);
+static void   canvas_cleanup(struct canvas_ctx *ctx);
+
 
 
 static void error_callback(int error, const char* description)
@@ -51,30 +30,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
-
-
-struct canvas_ctx {
-	unsigned size[2];
-
-	int status;
-	pthread_t tid;
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-};
-
-#define MAX_CONVAS  16
-
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static int num_ctx = 0;
-static struct convas_ctx * ctx_list[MAX_CONVAS];
-
-#define CANVAS_CTX(n)  \
-	struct canvas_ctx * ctx = ctx_list[n]
-
-#define canvas_log  printf
-
-static void * canvas_thread(void *);
-static void canvas_cleanup(struct canvas_ctx *ctx);
 
 int
 foo(int a, int b)
@@ -129,16 +84,14 @@ canvas_fini(int canvas)
 	canvas_cleanup(ctx);
 	free(ctx);
 	/* TODO */
+
+	glfwTerminate();
 }
 
-static void * canvas_thread(void * arg)
+pthread_once_t canvas_once_ctl = PTHREAD_ONCE_INIT;
+static void
+canvas_once_init(void)
 {
-    GLFWwindow* window;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location, vpos_location, vcol_location;
-
-    (void) arg;
-
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
@@ -147,21 +100,38 @@ static void * canvas_thread(void * arg)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        exit(EXIT_FAILURE);
+}
+
+static void
+canvas_repaint(GLFWwindow * win)
+{
+	struct canvas_ctx * ctx = glfwGetWindowUserPointer(win);
+	assert(ctx);
+}
+
+static void *
+canvas_thread(void * arg)
+{
+	struct canvas_ctx * ctx = arg;
+    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+    GLint mvp_location, vpos_location, vcol_location;
+
+	pthread_once(canvas_once_ctl, canvas_once_init);
+
+    ctx->win = glfwCreateWindow(ctx->size[0], ctx->size[1], "lisp canvas", NULL, NULL);
+    if (!ctx->win) {
+		return NULL;
     }
 
-    glfwSetKeyCallback(window, key_callback);
+	glfwGetWindowUserPointer(ctx->win, ctx);
+    glfwSetKeyCallback(ctx->win, canvas_key_callback);
+	glfwSetWindowRefreshCallback(ctx->win, canvas_repaint);
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(ctx->win);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     glfwSwapInterval(1);
 
     // NOTE: OpenGL error checks have been omitted for brevity
-
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -192,24 +162,6 @@ static void * canvas_thread(void * arg)
 
     while (!glfwWindowShouldClose(window))
     {
-        float ratio;
-        int width, height;
-        mat4x4 m, p, mvp;
-
-        glfwGetFramebufferSize(window, &width, &height);
-        ratio = width / (float) height;
-
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        mat4x4_identity(m);
-        mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-        mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        mat4x4_mul(mvp, p, m);
-
-        glUseProgram(program);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
