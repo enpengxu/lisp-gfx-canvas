@@ -99,7 +99,6 @@ canvas_once_init(void)
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-
 }
 
 static void
@@ -107,6 +106,8 @@ canvas_repaint(GLFWwindow * win)
 {
 	struct canvas_ctx * ctx = glfwGetWindowUserPointer(win);
 	assert(ctx);
+
+	canvas_draw(ctx);
 }
 
 static void *
@@ -132,9 +133,9 @@ canvas_thread(void * arg)
     glfwSwapInterval(1);
 
     // NOTE: OpenGL error checks have been omitted for brevity
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    /* glGenBuffers(1, &vertex_buffer); */
+    /* glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer); */
+    /* glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); */
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
@@ -153,24 +154,36 @@ canvas_thread(void * arg)
     vpos_location = glGetAttribLocation(program, "vPos");
     vcol_location = glGetAttribLocation(program, "vCol");
 
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(vertices[0]), (void*) 0);
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(vertices[0]), (void*) (sizeof(float) * 2));
+    /* glEnableVertexAttribArray(vpos_location); */
+    /* glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, */
+    /*                       sizeof(vertices[0]), (void*) 0); */
+    /* glEnableVertexAttribArray(vcol_location); */
+    /* glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, */
+    /*                       sizeof(vertices[0]), (void*) (sizeof(float) * 2)); */
 
+	double last = glfwGetTime();
+	double delta = 0;
     while (!glfwWindowShouldClose(window))
     {
-
-        glfwSwapBuffers(window);
         glfwPollEvents();
+
+		{
+			double now = glfwGetTime();
+			double delta += (now - last) * 60;
+			if (delta > 1) {
+				if (canvas_update(ctx)) {
+					canvas_render(ctx);
+				}
+				delta = 0;
+			}
+			last = now;
+		}
     }
 
     glfwDestroyWindow(window);
 
     glfwTerminate();
-    exit(EXIT_SUCCESS);
+	return NULL;
 }
 
 static void
@@ -178,5 +191,11 @@ canvas_cleanup(struct canvas_ctx *ctx)
 {
 }
 
+
+int
+canvas_undo()
+{
+	return 0;
+}
 
 //! [code]

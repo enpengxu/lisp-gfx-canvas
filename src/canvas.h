@@ -1,6 +1,13 @@
 #inndef __LISP_CANVAS_H
 #define __LISP_CANVAS_H
 
+enum DRAW_TYPE {
+	DRAW_POINT = 0,
+	DRAW_LINE,
+	DRAW_TRIANGLE,
+	DRAW_LAST,
+};
+
 struct vertex {
 	float x, y;
 	float r, g, b;
@@ -12,32 +19,27 @@ struct ver_pool {
 	struct vertex * ver;
 };
 
-enum DRAW_TYPE {
-	DRAW_POINT = 0,
-	DRAW_LINE,
-	DRAW_TRIANGLE,
-	DRAW_LAST,
-};
-
 struct drawitem {
 	DRAW_TYPE type;
 	struct ver_pool vpool;
-
+	GLuint vbuf;
+	int dirty;
 };
 
 struct canvas_ctx {
 	struct {
 		float center[2];
-		float size[2];
 		unsigned win_size[2];
-		float bk_color[4];
 	} settings;
 
 	struct {
+		float canvas_size[2];
+		int   win_size[2];
 		float rot;
 		float point_size;
 		float color[3];
-	} cur_state;
+		float bk_color[4];
+	} cur_states;
 
     GLFWwindow* win;
 
@@ -67,6 +69,17 @@ extern struct canvas_ctx_list __ctx_list;
 
 #define canvas_log  printf
 
+#define canvas_lock(ctx) {							\
+		int rc = pthread_mutex_lock((ctx)->mutex);	\
+		assert(rc == 0);							\
+		(void)rc;									\
+	}
+
+#define canvas_unlock(ctx) {							\
+		int rc = pthread_mutex_unlock((ctx)->mutex);	\
+		assert(rc == 0);							\
+		(void)rc;									\
+	}
 
 int canvas_draw_begin(int type);
 
