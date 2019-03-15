@@ -1,7 +1,18 @@
-#inndef __LISP_CANVAS_H
+#ifndef __LISP_CANVAS_H
 #define __LISP_CANVAS_H
 
-enum DRAW_TYPE {
+#include <stdlib.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <errno.h>
+#include <assert.h>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include "linmath.h"
+
+
+enum DRAW_PRIMITIVE {
 	DRAW_POINT = 0,
 	DRAW_LINE,
 	DRAW_TRIANGLE,
@@ -13,17 +24,25 @@ struct vertex {
 	float r, g, b;
 };
 
-struct ver_pool {
+struct verpool {
+	int dirty;
 	unsigned size;
 	unsigned num_ver;
 	struct vertex * ver;
 };
 
 struct drawitem {
-	DRAW_TYPE type;
-	struct ver_pool vpool;
-	GLuint vbuf;
+	enum DRAW_PRIMITIVE primitive;
+	struct verpool vpool;
+	unsigned vbuf;
 	int dirty;
+};
+
+struct glsl_shader {
+	GLint mvp_location;
+	GLint vpos_location;
+	GLint vcol_location;
+	GLuint program;
 };
 
 struct canvas_ctx {
@@ -39,7 +58,11 @@ struct canvas_ctx {
 		float point_size;
 		float color[3];
 		float bk_color[4];
-	} cur_states;
+
+		struct glsl_shader * shader;
+
+		enum DRAW_PRIMITIVE primitive;
+	} cur_state;
 
     GLFWwindow* win;
 
@@ -70,20 +93,20 @@ extern struct canvas_ctx_list __ctx_list;
 #define canvas_log  printf
 
 #define canvas_lock(ctx) {							\
-		int rc = pthread_mutex_lock((ctx)->mutex);	\
+		int rc = pthread_mutex_lock(&(ctx)->mutex);	\
 		assert(rc == 0);							\
 		(void)rc;									\
 	}
 
 #define canvas_unlock(ctx) {							\
-		int rc = pthread_mutex_unlock((ctx)->mutex);	\
+		int rc = pthread_mutex_unlock(&(ctx)->mutex);	\
 		assert(rc == 0);							\
 		(void)rc;									\
 	}
 
-int canvas_draw_begin(int type);
+int canvas_draw_begin(int primitive);
 
-int canvas_draw_color(float r, float g, floar b);
+int canvas_draw_color(float r, float g, float b);
 int canvas_draw_size(float s);
 int canvas_draw_point(float x, float y);
 
