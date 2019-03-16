@@ -19,6 +19,12 @@ enum DRAW_PRIMITIVE {
 	DRAW_LAST,
 };
 
+enum STATUS {
+	INIT = 0,
+	RUNNING,
+	STOP,
+};
+
 struct vertex {
 	float x, y;
 	float r, g, b;
@@ -68,7 +74,7 @@ struct canvas_ctx {
 
 	struct drawitem draws[DRAW_LAST];
 
-	int status;
+	enum STATUS status;
 	pthread_t tid;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
@@ -103,6 +109,11 @@ extern struct canvas_ctx_list __ctx_list;
 		assert(rc == 0);							\
 		(void)rc;									\
 	}
+
+
+int  canvas_init(int w, int h);
+int  canvas_fini();
+void canvas_active(int canvas);
 
 int canvas_draw_begin(int primitive);
 

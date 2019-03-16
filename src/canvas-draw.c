@@ -138,6 +138,8 @@ canvas_render(struct canvas_ctx * ctx)
 	mat4x4_mul(mvp, p, m);
 
 	glViewport(0, 0, ctx->cur_state.win_size[0],  ctx->cur_state.win_size[1]);
+
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(ctx->cur_state.shader->program);
@@ -228,13 +230,15 @@ canvas_repaint(GLFWwindow * win)
 	assert(ctx);
 
 	canvas_render(ctx);
+
+	glfwSwapBuffers(win);
 }
 
 
 void *
 canvas_thread(void * arg)
 {
-	int i;
+	int i, rc;
 	struct canvas_ctx * ctx = arg;
     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
     GLint mvp_location, vpos_location, vcol_location;
@@ -273,24 +277,34 @@ canvas_thread(void * arg)
 		drawitem_init(&ctx->draws[i]);
 	}
 
-	
+	rc = pthread_mutex_lock(&ctx->mutex);
+	assert(rc == 0);
+	ctx->status = RUNNING;
+	rc = pthread_cond_broadcast(&ctx->cond);
+	assert(rc == 0);
+	rc = pthread_mutex_unlock(&ctx->mutex);
+
 	double last = glfwGetTime();
 	double delta = 0;
     while (!glfwWindowShouldClose(ctx->win))
     {
-        glfwPollEvents();
-
-		{
-			double now = glfwGetTime();
-			delta += (now - last) * 60;
-			if (delta > 1) {
-				if (canvas_update(ctx)) {
-					canvas_render(ctx);
-				}
-				delta = 0;
-			}
-			last = now;
+        //glfwPollEvents();
+		//glfwWaitEvents();
+		glfwWaitEventsTimeout(1.0/90.0);
+		if (canvas_update(ctx)) {
+			canvas_render(ctx);
 		}
+		/* { */
+		/* 	double now = glfwGetTime(); */
+		/* 	delta += (now - last) * 60; */
+		/* 	if (delta > 1) { */
+		/* 		if (canvas_update(ctx)) { */
+		/* 			canvas_render(ctx); */
+		/* 		} */
+		/* 		delta = 0; */
+		/* 		last = now; */
+		/* 	} */
+		/* } */
     }
 
     glfwDestroyWindow(ctx->win);
@@ -298,4 +312,3 @@ canvas_thread(void * arg)
     glfwTerminate();
 	return NULL;
 }
-
