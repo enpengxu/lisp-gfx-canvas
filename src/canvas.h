@@ -84,7 +84,9 @@ struct canvas_ctx {
 
 struct canvas_ctx_list {
 	int cur;
+	int num_ctx;
 	struct canvas_ctx * ctx_list[16];
+	pthread_mutex_t mutex;
 };
 
 extern struct canvas_ctx_list __ctx_list;

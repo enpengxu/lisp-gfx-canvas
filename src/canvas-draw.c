@@ -36,11 +36,15 @@ verpool_init(struct verpool * pool, unsigned size)
 static int
 verpool_add(struct verpool * pool, float x, float y, float color[3])
 {
-	if (pool->num_ver >= pool->size)
+	if (pool->num_ver >= pool->size) {
 		pool->ver = realloc(pool->ver, 2 * pool->size);
+		pool->size *= 2;
+	}
 
-	if (!pool->ver)
+	if (!pool->ver) {
+		pool->size = 0;
 		return -errno;
+	}
 
 	pool->ver[pool->num_ver++] =
 		(struct vertex) { .x = x, .y = y,
@@ -61,6 +65,7 @@ drawitem_init(struct drawitem * item)
 
 	glGenBuffers(1, &item->vbuf);
 	glBindBuffer(GL_ARRAY_BUFFER, item->vbuf);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
 			sizeof(struct vertex), (void*) 0);
@@ -76,7 +81,6 @@ canvas_shader_init(const char * vertex_shader_text,
 		const char * fragment_shader_text)
 {
 	struct glsl_shader * shader = calloc(1, sizeof(*shader));
-
 	if (!shader) {
 		return NULL;
 	}
@@ -127,6 +131,7 @@ canvas_render(struct canvas_ctx * ctx)
 	mat4x4 m, p, mvp;
 
 	glfwGetFramebufferSize(ctx->win, &ctx->cur_state.win_size[0], &ctx->cur_state.win_size[1]);
+
 	ratio = (float)ctx->cur_state.win_size[0] / (float) ctx->cur_state.win_size[1];
 
 	int w = ctx->cur_state.canvas_size[0];
@@ -141,6 +146,7 @@ canvas_render(struct canvas_ctx * ctx)
 
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
 
 	glUseProgram(ctx->cur_state.shader->program);
 	glUniformMatrix4fv(ctx->cur_state.shader->mvp_location,
@@ -148,6 +154,16 @@ canvas_render(struct canvas_ctx * ctx)
 
 	for (int i=0; i < DRAW_LAST; i++) {
 		if (ctx->draws[i].vpool.num_ver) {
+			glBindBuffer(GL_ARRAY_BUFFER, ctx->draws[i].vbuf);
+			//glEnableVertexAttribArray(0);
+			//glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(ctx->cur_state.shader->vpos_location);
+			glVertexAttribPointer(ctx->cur_state.shader->vpos_location, 2, GL_FLOAT, GL_FALSE,
+					sizeof(struct vertex), (void*) 0);
+			glEnableVertexAttribArray(ctx->cur_state.shader->vcol_location);
+			glVertexAttribPointer(ctx->cur_state.shader->vcol_location, 3, GL_FLOAT, GL_FALSE,
+					sizeof(struct vertex), (void*) (sizeof(float) * 2));
+			int err = (int)glGetError();
 			glDrawArrays(modes[i], 0, ctx->draws[i].vpool.num_ver/(i+1));
 		}
 	}
@@ -228,6 +244,8 @@ canvas_repaint(GLFWwindow * win)
 {
 	struct canvas_ctx * ctx = glfwGetWindowUserPointer(win);
 	assert(ctx);
+
+	canvas_update(ctx);
 
 	canvas_render(ctx);
 

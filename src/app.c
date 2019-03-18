@@ -8,10 +8,13 @@ int main(void)
 	canvas = canvas_init(800, 600);
 	canvas_active(canvas);
 	
-	canvas_draw_begin(DRAW_POINT);
 	canvas_draw_color(1.0f, 0, 0);
 	canvas_draw_size(5.0f);
-	canvas_draw_point(0, 0);
+	canvas_draw_begin(DRAW_POINT);
+	for (int i=0; i<100; i++) {
+		canvas_draw_color((float)(i+1)/99.0f, 0, 0);
+		canvas_draw_point(i, 0);
+	}
 	canvas_draw_end();
 
 	while(1) {

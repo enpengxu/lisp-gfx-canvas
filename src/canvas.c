@@ -3,9 +3,11 @@
 #define MAX_CONVAS  16
 
 static pthread_once_t canvas_once_ctl = PTHREAD_ONCE_INIT;
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static int num_ctx = 0;
-struct canvas_ctx_list __ctx_list;
+struct canvas_ctx_list __ctx_list = {
+	.cur = -1,
+	.num_ctx = 0,
+	.mutex = PTHREAD_MUTEX_INITIALIZER,
+};
 
 void * canvas_thread(void *);
 static void   canvas_cleanup(struct canvas_ctx *ctx);
@@ -41,6 +43,35 @@ canvas_init_once(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 }
 
+static int
+ctx_list_add(struct canvas_ctx * ctx)
+{
+	int rc, n;
+	rc = pthread_mutex_lock(&__ctx_list.mutex);
+	assert(rc == 0 && __ctx_list.num_ctx < MAX_CONVAS);
+	__ctx_list.ctx_list[__ctx_list.num_ctx] = ctx;
+	n = __ctx_list.num_ctx++;
+	rc = pthread_mutex_unlock(&__ctx_list.mutex);
+	assert(rc == 0);
+	return n;
+}
+
+static int
+ctx_list_remove(int n)
+{
+	int rc; 
+	rc = pthread_mutex_lock(&__ctx_list.mutex);
+	assert(rc == 0 && __ctx_list.num_ctx < 16);
+	__ctx_list.ctx_list[n] = NULL;
+	if (n == __ctx_list.cur)
+		__ctx_list.cur = -1;
+	assert(__ctx_list.num_ctx < MAX_CONVAS);
+	rc = pthread_mutex_unlock(&__ctx_list.mutex);
+	assert(rc == 0);
+	return n;
+}
+
+
 int
 canvas_init(int w, int h)
 {
@@ -56,17 +87,13 @@ canvas_init(int w, int h)
 	ctx->status = INIT;
 	ctx->settings.win_size[0] = w;
 	ctx->settings.win_size[1] = h;
+
+	ctx->cur_state.canvas_size[0] = w;
+	ctx->cur_state.canvas_size[1] = h;
+
 	rc = pthread_mutex_init(&ctx->mutex, NULL);
 	assert(rc == 0);
 	rc = pthread_cond_init(&ctx->cond, NULL);
-	assert(rc == 0);
-
-	rc = pthread_mutex_lock(&mutex);
-	assert(rc == 0);
-	__ctx_list.ctx_list[num_ctx++] = ctx;
-
-	assert(num_ctx < MAX_CONVAS);
-	rc = pthread_mutex_unlock(&mutex);
 	assert(rc == 0);
 
 	rc = pthread_create(&ctx->tid, NULL,
@@ -83,8 +110,9 @@ canvas_init(int w, int h)
 		assert(rc == 0);
 	}
 	rc = pthread_mutex_unlock(&ctx->mutex);
+	assert(rc == 0);
 
-	return 0;
+	return ctx_list_add(ctx);
 }
 
 int
@@ -103,6 +131,7 @@ canvas_fini()
 	canvas_cleanup(ctx);
 	free(ctx);
 	/* TODO */
+	ctx_list_remove(__ctx_list.cur);
 
 	glfwTerminate();
 }
