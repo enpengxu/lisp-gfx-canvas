@@ -32,11 +32,11 @@ drawitem_init(struct drawitem * item)
 	glGenBuffers(1, &item->vbuf);
 	glBindBuffer(GL_ARRAY_BUFFER, item->vbuf);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
 			sizeof(struct vertex), (void*) 0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
 			sizeof(struct vertex), (void*) (sizeof(float) * 2));
 
 	return 0;
@@ -51,23 +51,23 @@ canvas_shader_init(const char * vertex_shader_text,
 		return NULL;
 	}
 
-    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
+	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+	glCompileShader(vertex_shader);
 
-    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
+	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+	glCompileShader(fragment_shader);
 
-    shader->program = glCreateProgram();
+	shader->program = glCreateProgram();
 
-    glAttachShader(shader->program, vertex_shader);
-    glAttachShader(shader->program, fragment_shader);
-    glLinkProgram(shader->program);
+	glAttachShader(shader->program, vertex_shader);
+	glAttachShader(shader->program, fragment_shader);
+	glLinkProgram(shader->program);
 
-    shader->mvp_location = glGetUniformLocation(shader->program, "MVP");
-    shader->vpos_location = glGetAttribLocation(shader->program, "vPos");
-    shader->vcol_location = glGetAttribLocation(shader->program, "vCol");
+	shader->mvp_location = glGetUniformLocation(shader->program, "MVP");
+	shader->vpos_location = glGetAttribLocation(shader->program, "vPos");
+	shader->vcol_location = glGetAttribLocation(shader->program, "vCol");
 
 	return shader;
 }
@@ -158,38 +158,25 @@ canvas_thread(void * arg)
 {
 	int i, rc;
 	struct canvas_ctx * ctx = arg;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location, vpos_location, vcol_location;
+	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+	GLint mvp_location, vpos_location, vcol_location;
 
-    ctx->win = glfwCreateWindow(ctx->settings.win_size[0],
+	ctx->win = glfwCreateWindow(ctx->settings.win_size[0],
 			ctx->settings.win_size[1], "lisp canvas", NULL, NULL);
-    if (!ctx->win) {
+	if (!ctx->win) {
 		return NULL;
-    }
+	}
 
 	glfwSetWindowUserPointer(ctx->win, ctx);
-    glfwSetKeyCallback(ctx->win, canvas_key_callback);
+	glfwSetKeyCallback(ctx->win, canvas_key_callback);
 	glfwSetWindowRefreshCallback(ctx->win, canvas_repaint);
 
-    glfwMakeContextCurrent(ctx->win);
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-    glfwSwapInterval(1);
-
-    // NOTE: OpenGL error checks have been omitted for brevity
-    /* glGenBuffers(1, &vertex_buffer); */
-    /* glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer); */
-    /* glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); */
+	glfwMakeContextCurrent(ctx->win);
+	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+	glfwSwapInterval(1);
 
 	ctx->cur_state.shader = canvas_shader_init(vertex_shader_text,
 			fragment_shader_text );
-
-    /* glEnableVertexAttribArray(vpos_location); */
-    /* glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, */
-    /*                       sizeof(vertices[0]), (void*) 0); */
-    /* glEnableVertexAttribArray(vcol_location); */
-    /* glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, */
-    /*                       sizeof(vertices[0]), (void*) (sizeof(float) * 2)); */
-
 
 	for(i=0;i < DRAW_LAST; i++) {
 		drawitem_init(&ctx->draws[i]);
@@ -205,9 +192,9 @@ canvas_thread(void * arg)
 	int status = 0;
 	double last = glfwGetTime();
 	double delta = 0;
-    while (status != -1 && !glfwWindowShouldClose(ctx->win))
-    {
-        //glfwPollEvents();
+	while (status != -1 && !glfwWindowShouldClose(ctx->win))
+	{
+		//glfwPollEvents();
 		//glfwWaitEvents();
 		glfwWaitEventsTimeout(1.0/90.0);
 		if (canvas_update(ctx)) {
@@ -217,11 +204,10 @@ canvas_thread(void * arg)
 		canvas_lock(ctx);
 		status = ctx->status;
 		canvas_unlock(ctx);
-    }
+	}
 
-    glfwDestroyWindow(ctx->win);
+	glfwDestroyWindow(ctx->win);
 
-    glfwTerminate();
+	glfwTerminate();
 	return NULL;
 }
-

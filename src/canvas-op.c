@@ -71,7 +71,7 @@ canvas_draw_end(void)
 {
 	GET_CTX();
 	int rc = 0;
-	
+
 	canvas_lock(ctx);
 	if (ctx->cur_state.primitive == -1) {
 		rc = -1;

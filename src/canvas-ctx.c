@@ -1,6 +1,6 @@
 #include "canvas.h"
 
-#define MAX_CONVAS  16
+#define MAX_CONVAS	16
 
 static pthread_once_t canvas_once_ctl = PTHREAD_ONCE_INIT;
 struct canvas_ctx_list __ctx_list = {
@@ -10,7 +10,7 @@ struct canvas_ctx_list __ctx_list = {
 };
 
 void * canvas_thread(void *);
-static void   canvas_cleanup(struct canvas_ctx *ctx);
+static void	  canvas_cleanup(struct canvas_ctx *ctx);
 
 int
 foo(int a, int b)
@@ -21,26 +21,26 @@ foo(int a, int b)
 static void
 error_callback(int error, const char* description)
 {
-    fprintf(stderr, "Error: %s\n", description);
+	fprintf(stderr, "Error: %s\n", description);
 }
 
 void
 canvas_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 static void
 canvas_init_once(void)
 {
-    glfwSetErrorCallback(error_callback);
+	glfwSetErrorCallback(error_callback);
 
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
+	if (!glfwInit())
+		exit(EXIT_FAILURE);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 }
 
 static int
@@ -92,7 +92,7 @@ canvas_init(int w, int h)
 	ctx->cur_state.canvas_size[1] = h;
 	ctx->cur_state.primitive = -1;
 	ctx->cur_state.point_size = 1.0f;
-	
+
 	rc = pthread_mutex_init(&ctx->mutex, NULL);
 	assert(rc == 0);
 	rc = pthread_cond_init(&ctx->cond, NULL);
