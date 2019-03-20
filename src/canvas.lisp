@@ -1,9 +1,10 @@
 ;;; C-demo
 (require 'cffi)
-(defpackage :lisp-to-c-user
+
+(defpackage :lisp-canvas
   (:use :cl :cffi))
  
-(in-package :lisp-to-c-user)
+(in-package :lisp-canvas)
 
 (define-foreign-library liblispcanvas
   (:darwin "liblispcanvas.dylib")
