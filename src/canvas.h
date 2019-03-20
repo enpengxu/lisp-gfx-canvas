@@ -11,7 +11,7 @@
 #include <GLFW/glfw3.h>
 #include "linmath.h"
 
-#include "vpool.h"
+#include "verpool.h"
 
 enum DRAW_PRIMITIVE {
 	DRAW_POINT = 0,

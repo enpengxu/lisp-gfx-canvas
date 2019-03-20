@@ -1,4 +1,6 @@
-#include "vpool.h"
+#include <errno.h>
+#include <stdlib.h>
+#include "verpool.h"
 
 int
 verpool_init(struct verpool * pool, unsigned size)
@@ -40,7 +42,7 @@ verpool_remove(struct verpool * pool, int num)
 }
 
 int
-verpool_sync(struct verpool * pool)
+verpool_update(struct verpool * pool)
 {
 	pool->num_ver += pool->num_pending;
 	if (pool->num_ver < 0)

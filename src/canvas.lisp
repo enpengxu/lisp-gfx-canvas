@@ -27,14 +27,14 @@
 (defcfun "canvas_draw_begin" :int
   (primitive :int))
 
-;;int canvas_draw_color(float r, float g, float b);
-(defcfun "canvas_draw_color" :int
+;;int canvas_point_color(float r, float g, float b);
+(defcfun "canvas_point_color" :int
   (r :float)
   (g :float)
   (b :float))
 
-;;int canvas_draw_size(float s);
-(defcfun "canvas_draw_size" :int
+;;int canvas_point_size(float s);
+(defcfun "canvas_point_size" :int
   (s :float))
 
 ;;int canvas_draw_point(float x, float y);
@@ -43,19 +43,18 @@
   (y :float))
 
 ;;int canvas_draw_end();
-(defcfun "canvas_draw_end" :int
-  ())
+(defcfun "canvas_draw_end" :int)
 
-;;int canvas_undo();
-(defcfun "canvas_undo" :int
-  ())
+;;int canvas_remove_points(int num);
+(defcfun "canvas_remove_points" :int)
 
-(defcfun "foo" :int
-  (w :int)
-   (h :int))
+;; (foo 200 20)
+(canvas-init 800 600)
+(canvas-active 0)
 
+(canvas-point-size 10.0)
+(canvas-point-color 1.0 0.0 0.0)
 
-
-(foo 200 20)
-(canvas-init 500 600)
-
+(canvas-draw-begin 0)
+(canvas-draw-point 0.0  0.0)
+(canvas-draw-end)

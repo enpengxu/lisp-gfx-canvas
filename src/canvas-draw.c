@@ -79,7 +79,7 @@ canvas_update(struct canvas_ctx * ctx)
 	canvas_lock(ctx);
 	for (int i=0; i < DRAW_LAST; i++) {
 		struct drawitem * draw = &ctx->draws[i];
-		if (vpool_update(&draw->vpool)) {
+		if (verpool_update(&draw->vpool)) {
 			rc ++;
 			glBindBuffer(GL_ARRAY_BUFFER, draw->vbuf);
 			glBufferData(GL_ARRAY_BUFFER, draw->vpool.num_ver * sizeof(struct vertex),
