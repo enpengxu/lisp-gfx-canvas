@@ -90,7 +90,9 @@ canvas_init(int w, int h)
 
 	ctx->cur_state.canvas_size[0] = w;
 	ctx->cur_state.canvas_size[1] = h;
-
+	ctx->cur_state.primitive = -1;
+	ctx->cur_state.point_size = 1.0f;
+	
 	rc = pthread_mutex_init(&ctx->mutex, NULL);
 	assert(rc == 0);
 	rc = pthread_cond_init(&ctx->cond, NULL);
@@ -116,7 +118,7 @@ canvas_init(int w, int h)
 }
 
 int
-canvas_fini()
+canvas_fini(void)
 {
 	GET_CTX();
 
@@ -126,6 +128,8 @@ canvas_fini()
 	rc = pthread_cond_signal(&ctx->cond);
 	assert(rc == 0);
 	rc = pthread_mutex_unlock(&ctx->mutex);
+
+	glfwPostEmptyEvent();
 
 	pthread_join(ctx->tid, NULL);
 	canvas_cleanup(ctx);
@@ -146,13 +150,6 @@ canvas_active(int canvas)
 static void
 canvas_cleanup(struct canvas_ctx *ctx)
 {
-}
-
-
-int
-canvas_undo()
-{
-	return 0;
 }
 
 //! [code]

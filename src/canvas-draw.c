@@ -22,40 +22,6 @@ static const char* fragment_shader_text =
 
 
 static int
-verpool_init(struct verpool * pool, unsigned size)
-{
-	pool->size = size;
-	pool->num_ver = 0;
-	pool->ver = malloc(sizeof(struct vertex) * size);
-	pool->dirty = 1;
-
-	return pool->ver ? 0 : -errno;
-}
-
-
-static int
-verpool_add(struct verpool * pool, float x, float y, float color[3])
-{
-	if (pool->num_ver >= pool->size) {
-		pool->ver = realloc(pool->ver, 2 * pool->size);
-		pool->size *= 2;
-	}
-
-	if (!pool->ver) {
-		pool->size = 0;
-		return -errno;
-	}
-
-	pool->ver[pool->num_ver++] =
-		(struct vertex) { .x = x, .y = y,
-						  .r = color[0],
-						  .g = color[1],
-						  .b = color[2] };
-	pool->dirty = 1;
-	return 0;
-}
-
-static int
 drawitem_init(struct drawitem * item)
 {
 	int rc = verpool_init(&item->vpool, 64 * 1024);
@@ -110,16 +76,18 @@ static int
 canvas_update(struct canvas_ctx * ctx)
 {
 	int rc = 0;
+	canvas_lock(ctx);
 	for (int i=0; i < DRAW_LAST; i++) {
 		struct drawitem * draw = &ctx->draws[i];
-		if (draw->dirty && draw->vpool.num_ver) {
+		if (vpool_update(&draw->vpool)) {
 			rc ++;
 			glBindBuffer(GL_ARRAY_BUFFER, draw->vbuf);
 			glBufferData(GL_ARRAY_BUFFER, draw->vpool.num_ver * sizeof(struct vertex),
 					draw->vpool.ver, GL_STATIC_DRAW);
-			draw->dirty = 0;
 		}
 	}
+	canvas_unlock(ctx);
+
 	return rc;
 }
 
@@ -151,7 +119,7 @@ canvas_render(struct canvas_ctx * ctx)
 	glUseProgram(ctx->cur_state.shader->program);
 	glUniformMatrix4fv(ctx->cur_state.shader->mvp_location,
 			1, GL_FALSE, (const GLfloat*) mvp);
-
+	glPointSize(ctx->cur_state.point_size);
 	for (int i=0; i < DRAW_LAST; i++) {
 		if (ctx->draws[i].vpool.num_ver) {
 			glBindBuffer(GL_ARRAY_BUFFER, ctx->draws[i].vbuf);
@@ -167,74 +135,6 @@ canvas_render(struct canvas_ctx * ctx)
 			glDrawArrays(modes[i], 0, ctx->draws[i].vpool.num_ver/(i+1));
 		}
 	}
-}
-
-int
-canvas_draw_begin(int primitive)
-{
-	GET_CTX();
-
-	if (ctx->cur_state.primitive != -1)
-		return -1;
-
-	switch(primitive) {
-	case DRAW_POINT:
-	case DRAW_LINE:
-	case DRAW_TRIANGLE:
-		break;
-	default:
-		return -1;
-	}
-
-	ctx->cur_state.primitive = primitive;
-	return 0;
-}
-
-int canvas_draw_color(float r, float g, float b)
-{
-	GET_CTX();
-	if (ctx->cur_state.primitive == -1)
-		return -1;
-
-	ctx->cur_state.color[0] = r;
-	ctx->cur_state.color[1] = g;
-	ctx->cur_state.color[2] = b;
-	return 0;
-}
-
-int canvas_draw_size(float s)
-{
-	GET_CTX();
-	if (ctx->cur_state.primitive == -1)
-		return -1;
-
-	ctx->cur_state.point_size = s;
-	return 0;
-}
-
-int canvas_draw_point(float x, float y)
-{
-	GET_CTX();
-	if (ctx->cur_state.primitive == -1)
-		return -1;
-
-	canvas_lock(ctx);
-
-	struct drawitem * draw = &ctx->draws[ctx->cur_state.primitive];
-	verpool_add(&draw->vpool, x, y, ctx->cur_state.color);
-	draw->dirty = 1;
-
-	canvas_unlock(ctx);
-}
-
-int
-canvas_draw_end()
-{
-	GET_CTX();
-	if (ctx->cur_state.primitive == -1)
-		return -1;
-	ctx->cur_state.primitive = -1;
-	return 0;
 }
 
 void canvas_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -302,27 +202,21 @@ canvas_thread(void * arg)
 	assert(rc == 0);
 	rc = pthread_mutex_unlock(&ctx->mutex);
 
+	int status = 0;
 	double last = glfwGetTime();
 	double delta = 0;
-    while (!glfwWindowShouldClose(ctx->win))
+    while (status != -1 && !glfwWindowShouldClose(ctx->win))
     {
         //glfwPollEvents();
 		//glfwWaitEvents();
 		glfwWaitEventsTimeout(1.0/90.0);
 		if (canvas_update(ctx)) {
 			canvas_render(ctx);
+			glfwSwapBuffers(ctx->win);
 		}
-		/* { */
-		/* 	double now = glfwGetTime(); */
-		/* 	delta += (now - last) * 60; */
-		/* 	if (delta > 1) { */
-		/* 		if (canvas_update(ctx)) { */
-		/* 			canvas_render(ctx); */
-		/* 		} */
-		/* 		delta = 0; */
-		/* 		last = now; */
-		/* 	} */
-		/* } */
+		canvas_lock(ctx);
+		status = ctx->status;
+		canvas_unlock(ctx);
     }
 
     glfwDestroyWindow(ctx->win);
@@ -330,3 +224,4 @@ canvas_thread(void * arg)
     glfwTerminate();
 	return NULL;
 }
+

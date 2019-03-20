@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include "linmath.h"
 
+#include "vpool.h"
 
 enum DRAW_PRIMITIVE {
 	DRAW_POINT = 0,
@@ -25,23 +26,10 @@ enum STATUS {
 	STOP,
 };
 
-struct vertex {
-	float x, y;
-	float r, g, b;
-};
-
-struct verpool {
-	int dirty;
-	unsigned size;
-	unsigned num_ver;
-	struct vertex * ver;
-};
-
 struct drawitem {
 	enum DRAW_PRIMITIVE primitive;
-	struct verpool vpool;
 	unsigned vbuf;
-	int dirty;
+	struct verpool vpool;
 };
 
 struct glsl_shader {
@@ -114,18 +102,17 @@ extern struct canvas_ctx_list __ctx_list;
 
 
 int  canvas_init(int w, int h);
-int  canvas_fini();
+int  canvas_fini(void);
 void canvas_active(int canvas);
 
 int canvas_draw_begin(int primitive);
 
-int canvas_draw_color(float r, float g, float b);
-int canvas_draw_size(float s);
+int canvas_point_color(float r, float g, float b);
+int canvas_point_size(float s);
 int canvas_draw_point(float x, float y);
+int canvas_remove_points(int num);
+int canvas_draw_end(void);
 
-int canvas_draw_end();
-
-int canvas_undo();
 
 //int canvas_draw_line(float x, float y);
  

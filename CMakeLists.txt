@@ -38,8 +38,10 @@ set(TINYCTHREAD "${CMAKE_CURRENT_SOURCE_DIR}/deps/tinycthread.h"
 
 set(LIB_CANVAS_SRC
 	${GLAD}
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/canvas.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/canvas-ctx.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/canvas-draw.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/canvas-op.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/verpool.c"
 	)
 	
 set(APP_SRC
