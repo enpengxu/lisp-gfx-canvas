@@ -75,8 +75,8 @@ canvas_shader_init(const char * vertex_shader_text,
 static int
 canvas_update(struct canvas_ctx * ctx)
 {
-	int rc = 0;
 	canvas_lock(ctx);
+	int rc = ctx->cur_state.flag;
 	for (int i=0; i < DRAW_LAST; i++) {
 		struct drawitem * draw = &ctx->draws[i];
 		if (verpool_update(&draw->vpool)) {

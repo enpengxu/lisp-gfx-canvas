@@ -56,6 +56,8 @@ struct canvas_ctx {
 		struct glsl_shader * shader;
 
 		enum DRAW_PRIMITIVE primitive;
+
+		int flag;
 	} cur_state;
 
     GLFWwindow* win;

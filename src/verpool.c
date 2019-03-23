@@ -21,13 +21,14 @@ verpool_add(struct verpool * pool, float x, float y, float color[3])
 		pool->ver = realloc(pool->ver, 2 * pool->size);
 		pool->size *= 2;
 	}
-
 	if (!pool->ver) {
 		pool->size = 0;
 		return -errno;
 	}
+
 	pool->ver[pool->num_pending + pool->num_ver] =
-		(struct vertex) { .x = x, .y = y,
+		(struct vertex) { .x = x,
+						  .y = y,
 						  .r = color[0],
 						  .g = color[1],
 						  .b = color[2] };
@@ -44,8 +45,11 @@ verpool_remove(struct verpool * pool, int num)
 int
 verpool_update(struct verpool * pool)
 {
+	int rc;
 	pool->num_ver += pool->num_pending;
 	if (pool->num_ver < 0)
 		pool->num_ver = 0;
-	return pool->num_pending ? 1 : 0;
+	rc = pool->num_pending ? 1 : 0;
+	pool->num_pending = 0;
+	return rc;
 }

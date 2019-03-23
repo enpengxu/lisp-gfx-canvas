@@ -17,7 +17,7 @@ struct verpool {
 int verpool_init(struct verpool * pool, unsigned size);
 int verpool_add(struct verpool * pool, float x, float y, float color[3]);
 void verpool_remove(struct verpool * pool, int num);
-int verpool_sync(struct verpool * pool);
+int verpool_update(struct verpool * pool);
 
 
 #endif

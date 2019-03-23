@@ -53,9 +53,23 @@
 (canvas-init 800 600)
 (canvas-active 0)
 
-(canvas-point-size 10.0)
-(canvas-point-color 1.0 0.0 0.0)
+;; (canvas-point-size 10.0)
+;; (canvas-point-color 1.0 0.0 0.0)
 
-(canvas-draw-begin 0)
-(canvas-draw-point 0.0  0.0)
-(canvas-draw-end)
+;; (canvas-draw-begin 0)
+;; (canvas-draw-point 0.0  0.0)
+;; (canvas-draw-end)
+
+(defun draw-point (x y)
+  (canvas-draw-begin 0)
+  (canvas-draw-point (float x) (float y))
+  (canvas-draw-end))
+
+
+(defun point-size (s)
+  (canvas-point-size (float s)))
+
+(defun point-color (r g b)
+  (canvas-point-color
+   (float r) (float g) (float b)))
+

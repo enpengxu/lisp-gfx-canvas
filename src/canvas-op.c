@@ -1,5 +1,13 @@
 #include "canvas.h"
 
+static inline void
+canvas_post_update()
+{
+	// update
+	glfwPostEmptyEvent();
+}
+
+
 int
 canvas_draw_begin(int primitive)
 {
@@ -37,6 +45,8 @@ canvas_point_color(float r, float g, float b)
 	ctx->cur_state.color[2] = b;
 
 	canvas_unlock(ctx);
+
+	canvas_post_update();
 	return 0;
 }
 
@@ -44,7 +54,10 @@ int canvas_point_size(float s)
 {
 	GET_CTX();
 	canvas_lock(ctx);
+
 	ctx->cur_state.point_size = s;
+	ctx->cur_state.flag |= 1;
+
 	canvas_unlock(ctx);
 	return 0;
 }
@@ -53,9 +66,9 @@ int
 canvas_draw_point(float x, float y)
 {
 	GET_CTX();
-	int rc = 0;
-
 	canvas_lock(ctx);
+
+	int rc = 0;
 	if (ctx->cur_state.primitive == -1) {
 		rc = -1;
 	} else {
@@ -70,9 +83,9 @@ int
 canvas_draw_end(void)
 {
 	GET_CTX();
-	int rc = 0;
-
 	canvas_lock(ctx);
+
+	int rc = 0;
 	if (ctx->cur_state.primitive == -1) {
 		rc = -1;
 	} else {
@@ -80,7 +93,7 @@ canvas_draw_end(void)
 	}
 	canvas_unlock(ctx);
 	// update
-	glfwPostEmptyEvent();
+	canvas_post_update();
 
 	return rc;
 }
@@ -99,5 +112,7 @@ canvas_remove_points(int num)
 		verpool_remove(&draw->vpool, num);
 	}
 	canvas_unlock(ctx);
+
+	canvas_post_update();
 	return rc;
 }
