@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <assert.h>
 #include "canvas.h"
 
 static inline void
@@ -56,7 +58,7 @@ int canvas_point_size(float s)
 	canvas_lock(ctx);
 
 	ctx->cur_state.point_size = s;
-	ctx->cur_state.flag |= 1;
+	ctx->cur_state.flag |= MOD_VERTEX_SIZE;
 
 	canvas_unlock(ctx);
 	return 0;
@@ -75,6 +77,7 @@ canvas_draw_point(float x, float y)
 		struct drawitem * draw = &ctx->draws[ctx->cur_state.primitive];
 		verpool_add(&draw->vpool, x, y, ctx->cur_state.color);
 	}
+	ctx->cur_state.flag |= MOD_VERTEX_NUM;
 	canvas_unlock(ctx);
 	return rc;
 }
@@ -99,20 +102,30 @@ canvas_draw_end(void)
 }
 
 int
-canvas_remove_points(int num)
+canvas_remove_points(int primitive, int num)
 {
 	GET_CTX();
 	int rc = 0;
 
 	canvas_lock(ctx);
-	if (ctx->cur_state.primitive == -1) {
+	if (ctx->cur_state.primitive != -1) {
 		rc = -1;
 	} else {
-		struct drawitem * draw = &ctx->draws[ctx->cur_state.primitive];
+		struct drawitem * draw = &ctx->draws[primitive];
 		verpool_remove(&draw->vpool, num);
 	}
+	ctx->cur_state.flag |= MOD_VERTEX_NUM;
 	canvas_unlock(ctx);
-
 	canvas_post_update();
+	return rc;
+}
+
+int
+canvas_clear(void)
+{
+	int rc = 0;
+	for (int i=0; i<DRAW_LAST; i++) {
+		rc |= canvas_remove_points(i, INT_MAX);
+	}
 	return rc;
 }

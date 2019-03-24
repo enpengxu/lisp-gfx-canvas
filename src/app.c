@@ -12,9 +12,11 @@ int main(void)
 	canvas_point_size(5.0f);
 
 	canvas_draw_begin(DRAW_POINT);
-	for (int i=0; i<100; i++) {
-		canvas_point_color((float)(i+1)/99.0f, 0, 0);
-		canvas_draw_point(i, 0);
+	for (int y=-400; y<400; y++) {
+		for (int x=-400; x<400; x++) {
+			canvas_point_color((float)(x)/400.0f, 0, 0);
+			canvas_draw_point(x, y);
+		}
 	}
 	canvas_draw_end();
 

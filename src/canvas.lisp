@@ -73,3 +73,20 @@
   (canvas-point-color
    (float r) (float g) (float b)))
 
+(defun draw-hline (x1 x2 y)
+  (loop for i from x1 to x2
+	 do (draw-point i y)))
+
+(defun draw-vline (y1 y2 x)
+  (loop for e from y1 to y2
+	   do (draw-point x e)))
+  
+(defun draw-box (x1 y1 x2 y2)
+  (draw-vline y1 y2 x1)
+  (draw-hline x1 x2 y1)
+  (draw-vline y1 y2 x2)
+  (draw-hline x1 x2 y2))
+
+(defun full-box (x1 y1 x2 y2 )
+  (loop for i from y1 to y2
+	 do (draw-hline x1 x2 i)))

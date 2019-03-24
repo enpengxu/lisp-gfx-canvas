@@ -26,6 +26,11 @@ enum STATUS {
 	STOP,
 };
 
+#define MOD_VERTEX_NUM   (1<<0)
+#define MOD_VERTEX_SIZE  (1<<1)
+//#define MOD_VERTEX_SIZE  (1<<1)
+
+
 struct drawitem {
 	enum DRAW_PRIMITIVE primitive;
 	unsigned vbuf;
@@ -112,8 +117,9 @@ int canvas_draw_begin(int primitive);
 int canvas_point_color(float r, float g, float b);
 int canvas_point_size(float s);
 int canvas_draw_point(float x, float y);
-int canvas_remove_points(int num);
+int canvas_remove_points(int primitive, int num);
 int canvas_draw_end(void);
+int canvas_clear(void);
 
 
 //int canvas_draw_line(float x, float y);

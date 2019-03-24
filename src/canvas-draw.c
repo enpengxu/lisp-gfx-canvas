@@ -131,7 +131,6 @@ canvas_render(struct canvas_ctx * ctx)
 			glEnableVertexAttribArray(ctx->cur_state.shader->vcol_location);
 			glVertexAttribPointer(ctx->cur_state.shader->vcol_location, 3, GL_FLOAT, GL_FALSE,
 					sizeof(struct vertex), (void*) (sizeof(float) * 2));
-			int err = (int)glGetError();
 			glDrawArrays(modes[i], 0, ctx->draws[i].vpool.num_ver/(i+1));
 		}
 	}
